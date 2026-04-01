@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
 
 interface NewsItem {
   id: string
@@ -358,6 +358,52 @@ const DataContext = createContext<DataContextType | undefined>(undefined)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<SiteData>(defaultData)
+  const [hasLoadedRemote, setHasLoadedRemote] = useState(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const loadRemoteData = async () => {
+      try {
+        const response = await fetch('/api/site-data', { cache: 'no-store' })
+        if (!response.ok) return
+
+        const result = await response.json()
+        if (result?.payload && typeof result.payload === 'object') {
+          setData(prev => ({ ...prev, ...result.payload }))
+        }
+      } catch (error) {
+        console.error('Failed to load remote site data:', error)
+      } finally {
+        setHasLoadedRemote(true)
+      }
+    }
+
+    void loadRemoteData()
+  }, [])
+
+  useEffect(() => {
+    if (!hasLoadedRemote) return
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      void fetch('/api/site-data', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: data }),
+      }).catch((error) => {
+        console.error('Failed to persist site data:', error)
+      })
+    }, 350)
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+      }
+    }
+  }, [data, hasLoadedRemote])
 
   const updateOwnerMessage = (message: string) => {
     setData(prev => ({ ...prev, ownerMessage: message }))

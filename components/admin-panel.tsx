@@ -339,9 +339,10 @@ export function AdminPanel() {
         body: formData
       })
 
-      if (!response.ok) throw new Error('Upload failed')
-
       const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result?.error || 'Upload failed')
+      }
       
       // Update the appropriate URL based on category
       switch (category) {
@@ -377,7 +378,7 @@ export function AdminPanel() {
       alert('アップロード完了')
     } catch (error) {
       console.error('Upload error:', error)
-      alert('アップロードに失敗しました')
+      alert(`アップロードに失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
     } finally {
       setUploadState({ uploading: false, progress: 0 })
       if (e.target) e.target.value = ''

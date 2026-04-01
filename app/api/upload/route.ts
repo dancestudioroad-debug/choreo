@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      throw uploadError
+      return NextResponse.json(
+        { error: `Supabase upload failed: ${uploadError.message}` },
+        { status: 500 }
+      )
     }
 
     const { data: publicUrlData } = supabase.storage
@@ -55,7 +58,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: `Upload failed: ${error instanceof Error ? error.message : 'unknown error'}` },
+      { status: 500 }
+    )
   }
 }
 
