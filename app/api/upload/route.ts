@@ -1,8 +1,8 @@
-import { put } from '@vercel/blob'
+import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
-import { mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+
+const BUCKET = 'uploads'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,37 +14,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const filename = buildFilename(category, file.name)
-    const blobToken = process.env.BLOB_READ_WRITE_TOKEN
-    const shouldUseBlob = typeof blobToken === 'string' && blobToken.length > 0
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (shouldUseBlob) {
-      const blob = await put(filename, file, {
-        access: 'public',
-      })
-
-      return NextResponse.json({ 
-        url: blob.url,
-        pathname: blob.pathname,
-        name: file.name,
-        type: getFileType(file.type),
-        category
-      })
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: 'Missing Supabase environment variables' },
+        { status: 500 }
+      )
     }
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', category)
-    await mkdir(uploadDir, { recursive: true })
-
-    const safeName = `${Date.now()}-${sanitizeFileName(file.name)}-${randomUUID()}`
-    const absolutePath = path.join(uploadDir, safeName)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const filename = buildFilename(category, file.name)
     const arrayBuffer = await file.arrayBuffer()
-    await writeFile(absolutePath, Buffer.from(arrayBuffer))
+    const buffer = Buffer.from(arrayBuffer)
 
-    const localUrl = `/uploads/${category}/${safeName}`
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(filename, buffer, {
+        contentType: file.type || undefined,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      throw uploadError
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(BUCKET)
+      .getPublicUrl(filename)
+
+    const publicUrl = publicUrlData.publicUrl
 
     return NextResponse.json({ 
-      url: localUrl,
-      pathname: localUrl,
+      url: publicUrl,
+      pathname: filename,
       name: file.name,
       type: getFileType(file.type),
       category
