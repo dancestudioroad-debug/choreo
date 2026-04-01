@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ccmvvcbbtevtnkqaewfv.supabase.co').trim();
+    const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjbXZ2Y2JidGV2dG5kcWFld2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDc5MDAsImV4cCI6MjA5MDYyMzkwMH0.n8UHuyuHl3XeREbD1Ju-4t9upyq_q3c8BUKHxysr1fc').trim();
 
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
