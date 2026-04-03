@@ -1,7 +1,16 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useData } from '@/lib/data-context'
+
+const SESSION_MS = 3 * 60 * 60 * 1000
+const KEY_AUTH = 'choreo-auth'
+const KEY_AUTH_AT = 'choreo-auth-at'
+const KEY_ADMIN = 'choreo-admin'
+
+function isSessionExpired(loginAtMs: number): boolean {
+  return Date.now() - loginAtMs > SESSION_MS
+}
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -22,38 +31,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  useEffect(() => {
-    const session = sessionStorage.getItem('choreo-auth')
-    const adminSession = sessionStorage.getItem('choreo-admin')
-    if (session === 'true') {
-      setIsAuthenticated(true)
-    }
-    if (adminSession === 'true') {
-      setIsAdmin(true)
-    }
+  const clearSessionStorage = useCallback(() => {
+    sessionStorage.removeItem(KEY_AUTH)
+    sessionStorage.removeItem(KEY_AUTH_AT)
+    sessionStorage.removeItem(KEY_ADMIN)
   }, [])
+
+  const logout = useCallback(() => {
+    setIsAuthenticated(false)
+    setIsAdmin(false)
+    clearSessionStorage()
+  }, [clearSessionStorage])
+
+  const enforceSessionOrLogout = useCallback(() => {
+    if (sessionStorage.getItem(KEY_AUTH) !== 'true') return
+    const atRaw = sessionStorage.getItem(KEY_AUTH_AT)
+    const at = atRaw ? Number(atRaw) : NaN
+    if (!Number.isFinite(at) || isSessionExpired(at)) {
+      setIsAuthenticated(false)
+      setIsAdmin(false)
+      clearSessionStorage()
+    }
+  }, [clearSessionStorage])
+
+  useEffect(() => {
+    const session = sessionStorage.getItem(KEY_AUTH)
+    const adminSession = sessionStorage.getItem(KEY_ADMIN)
+    const atRaw = sessionStorage.getItem(KEY_AUTH_AT)
+    const at = atRaw ? Number(atRaw) : NaN
+
+    if (session === 'true') {
+      if (!Number.isFinite(at) || isSessionExpired(at)) {
+        clearSessionStorage()
+        setIsAuthenticated(false)
+        setIsAdmin(false)
+        return
+      }
+      setIsAuthenticated(true)
+      if (adminSession === 'true') {
+        setIsAdmin(true)
+      }
+    }
+  }, [clearSessionStorage])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      enforceSessionOrLogout()
+    }, 60_000)
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        enforceSessionOrLogout()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [enforceSessionOrLogout])
 
   const login = (password: string): boolean => {
     if (password === data.userPassword || password === data.adminPassword) {
       setIsAuthenticated(true)
-      sessionStorage.setItem('choreo-auth', 'true')
+      sessionStorage.setItem(KEY_AUTH, 'true')
+      sessionStorage.setItem(KEY_AUTH_AT, String(Date.now()))
       if (password === data.adminPassword) {
         setIsAdmin(true)
-        sessionStorage.setItem('choreo-admin', 'true')
+        sessionStorage.setItem(KEY_ADMIN, 'true')
       } else {
         setIsAdmin(false)
-        sessionStorage.removeItem('choreo-admin')
+        sessionStorage.removeItem(KEY_ADMIN)
       }
       return true
     }
     return false
-  }
-
-  const logout = () => {
-    setIsAuthenticated(false)
-    setIsAdmin(false)
-    sessionStorage.removeItem('choreo-auth')
-    sessionStorage.removeItem('choreo-admin')
   }
 
   const toggleAdminMode = () => {
