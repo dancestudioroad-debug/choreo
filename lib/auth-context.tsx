@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useData } from '@/lib/data-context'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -16,18 +17,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Default passwords
-const DEFAULT_USER_PASSWORD = "choreo2024"
-const DEFAULT_ADMIN_PASSWORD = "admin2024"
-
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { data, updatePersistedUserPassword, updatePersistedAdminPassword } = useData()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [userPassword, setUserPassword] = useState(DEFAULT_USER_PASSWORD)
-  const [adminPassword, setAdminPassword] = useState(DEFAULT_ADMIN_PASSWORD)
 
   useEffect(() => {
-    // Check for existing session
     const session = sessionStorage.getItem('choreo-auth')
     const adminSession = sessionStorage.getItem('choreo-admin')
     if (session === 'true') {
@@ -36,21 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (adminSession === 'true') {
       setIsAdmin(true)
     }
-    
-    // Load saved passwords
-    const savedUserPass = localStorage.getItem('choreo-user-password')
-    const savedAdminPass = localStorage.getItem('choreo-admin-password')
-    if (savedUserPass) setUserPassword(savedUserPass)
-    if (savedAdminPass) setAdminPassword(savedAdminPass)
   }, [])
 
   const login = (password: string): boolean => {
-    if (password === userPassword || password === adminPassword) {
+    if (password === data.userPassword || password === data.adminPassword) {
       setIsAuthenticated(true)
       sessionStorage.setItem('choreo-auth', 'true')
-      if (password === adminPassword) {
+      if (password === data.adminPassword) {
         setIsAdmin(true)
         sessionStorage.setItem('choreo-admin', 'true')
+      } else {
+        setIsAdmin(false)
+        sessionStorage.removeItem('choreo-admin')
       }
       return true
     }
@@ -69,21 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUserPassword = (password: string) => {
-    setUserPassword(password)
-    localStorage.setItem('choreo-user-password', password)
+    updatePersistedUserPassword(password)
   }
 
   const updateAdminPassword = (password: string) => {
-    setAdminPassword(password)
-    localStorage.setItem('choreo-admin-password', password)
+    updatePersistedAdminPassword(password)
   }
 
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       isAdmin, 
-      userPassword,
-      adminPassword,
+      userPassword: data.userPassword,
+      adminPassword: data.adminPassword,
       login, 
       logout, 
       toggleAdminMode,

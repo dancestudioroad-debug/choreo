@@ -77,6 +77,11 @@ interface SiteData {
   
   // Settings
   googleDriveUrl: string
+
+  /** 出展者ログイン用（Supabase site_content と同期） */
+  userPassword: string
+  /** 管理者ログイン用（Supabase site_content と同期） */
+  adminPassword: string
   
   // Calculator settings - 出演料の内訳 (複数項目)
   performanceFeeBreakdown: PerformanceFeeBreakdown[]
@@ -139,6 +144,9 @@ interface DataContextType {
   deletePerformanceFeeItem: (id: string) => void
   updatePerformanceFeeItem: (id: string, item: Omit<PerformanceFeeBreakdown, 'id'>) => void
   updateGuaranteeSettings: (amount: number, label: string) => void
+
+  updatePersistedUserPassword: (password: string) => void
+  updatePersistedAdminPassword: (password: string) => void
   
   // Media
   addMedia: (media: Omit<MediaItem, 'id'>) => void
@@ -342,6 +350,9 @@ const defaultData: SiteData = {
 
   googleDriveUrl: 'https://drive.google.com/drive/folders/example',
 
+  userPassword: 'choreo2024',
+  adminPassword: 'admin2024',
+
   // Calculator - 出演料内訳（複数項目）
   performanceFeeBreakdown: [
     { id: '1', label: '基本出演料', amountPerPerson: 1000 },
@@ -369,7 +380,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const result = await response.json()
         if (result?.payload && typeof result.payload === 'object') {
-          setData(prev => ({ ...prev, ...result.payload }))
+          setData((prev) => {
+            const merged = { ...prev, ...result.payload } as SiteData
+            if (typeof localStorage !== 'undefined') {
+              const legacyUser = localStorage.getItem('choreo-user-password')
+              const legacyAdmin = localStorage.getItem('choreo-admin-password')
+              if (legacyUser && !('userPassword' in (result.payload as object))) {
+                merged.userPassword = legacyUser
+              }
+              if (legacyAdmin && !('adminPassword' in (result.payload as object))) {
+                merged.adminPassword = legacyAdmin
+              }
+            }
+            if (typeof merged.userPassword !== 'string' || !merged.userPassword) {
+              merged.userPassword = prev.userPassword
+            }
+            if (typeof merged.adminPassword !== 'string' || !merged.adminPassword) {
+              merged.adminPassword = prev.adminPassword
+            }
+            return merged
+          })
         }
       } catch (error) {
         console.error('Failed to load remote site data:', error)
@@ -562,6 +592,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  const updatePersistedUserPassword = (password: string) => {
+    setData(prev => ({ ...prev, userPassword: password }))
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('choreo-user-password')
+    }
+  }
+
+  const updatePersistedAdminPassword = (password: string) => {
+    setData(prev => ({ ...prev, adminPassword: password }))
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('choreo-admin-password')
+    }
+  }
+
   // Media
   const addMedia = (media: Omit<MediaItem, 'id'>) => {
     const newMedia = { ...media, id: Date.now().toString() }
@@ -609,6 +653,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deletePerformanceFeeItem,
       updatePerformanceFeeItem,
       updateGuaranteeSettings,
+      updatePersistedUserPassword,
+      updatePersistedAdminPassword,
       addMedia,
       deleteMedia
     }}>
