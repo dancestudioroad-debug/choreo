@@ -20,7 +20,11 @@ function AppContent() {
 
   useEffect(() => {
     if (isAuthenticated && !prevAuthenticated.current) {
+      setCurrentPage('dashboard')
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+    if (!isAuthenticated && prevAuthenticated.current) {
+      setCurrentPage('dashboard')
     }
     prevAuthenticated.current = isAuthenticated
   }, [isAuthenticated])
