@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from 'react'
-import { Lock, AlertCircle } from 'lucide-react'
+import { Lock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/auth-context'
 
 export function LoginPage() {
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
@@ -50,17 +51,30 @@ export function LoginPage() {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <Lock className="w-5 h-5" />
             </div>
             <Input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="パスワードを入力"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-14 pl-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-foreground/20 text-base"
+              className="h-14 pl-12 pr-12 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-foreground/20 text-base"
               disabled={isLoading}
+              autoComplete="current-password"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+              aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
+            >
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
           </div>
 
           {error && (

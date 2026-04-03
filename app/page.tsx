@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { DataProvider } from '@/lib/data-context'
 import { LoginPage } from '@/components/login-page'
@@ -16,6 +16,14 @@ type PageType = 'dashboard' | 'info' | 'calculator' | 'admin' | 'submission'
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageType>('dashboard')
   const { isAuthenticated } = useAuth()
+  const prevAuthenticated = useRef(false)
+
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthenticated.current) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+    prevAuthenticated.current = isAuthenticated
+  }, [isAuthenticated])
 
   if (!isAuthenticated) {
     return <LoginPage />
