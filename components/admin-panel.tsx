@@ -19,7 +19,8 @@ import {
   Video,
   MapPin,
   Lightbulb,
-  Calendar
+  Calendar,
+  Award
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,6 +68,7 @@ export function AdminPanel() {
   const [eventOpening, setEventOpening] = useState('')
   const [venueInfo, setVenueInfo] = useState('')
   const [ticketInfo, setTicketInfo] = useState('')
+  const [eventBestShow, setEventBestShow] = useState('')
   const [submissionDetails, setSubmissionDetails] = useState('')
   const [paymentExplanation, setPaymentExplanation] = useState('')
   
@@ -136,6 +138,7 @@ export function AdminPanel() {
     updateVenueImageCrop,
     updateVenueSeatChartUrl,
     updateTicketInfo,
+    updateEventBestShow,
     updateSubmissionDetails,
     updatePaymentExplanation,
     updateGoogleDriveUrl,
@@ -162,6 +165,7 @@ export function AdminPanel() {
     setEventOpening(data.eventOpening)
     setVenueInfo(data.venueInfo)
     setTicketInfo(data.ticketInfo)
+    setEventBestShow(data.eventBestShow)
     setSubmissionDetails(data.submissionDetails)
     setPaymentExplanation(data.paymentExplanation)
     setGoogleDriveUrl(data.googleDriveUrl)
@@ -243,6 +247,9 @@ export function AdminPanel() {
         break
       case 'ticket':
         updateTicketInfo(ticketInfo)
+        break
+      case 'bestShow':
+        updateEventBestShow(eventBestShow)
         break
       case 'submission':
         updateSubmissionDetails(submissionDetails)
@@ -762,6 +769,25 @@ export function AdminPanel() {
                   className="bg-muted border-border text-foreground"
                 />
                 <Button size="sm" variant="outline" onClick={() => handleSaveContent('ticket')}>保存</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Award className="w-5 h-5" />
+                  BEST SHOW
+                </CardTitle>
+                <CardDescription>「出展者ガイド {'>'} BEST SHOW」タブに表示される説明文を編集</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  value={eventBestShow}
+                  onChange={(e) => setEventBestShow(e.target.value)}
+                  rows={8}
+                  className="bg-muted border-border text-foreground"
+                />
+                <Button size="sm" variant="outline" onClick={() => handleSaveContent('bestShow')}>保存</Button>
               </CardContent>
             </Card>
 

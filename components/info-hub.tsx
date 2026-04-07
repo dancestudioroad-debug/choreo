@@ -12,7 +12,8 @@ import {
   FileText,
   Ticket,
   ExternalLink,
-  Megaphone
+  Megaphone,
+  Award
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -24,7 +25,7 @@ import {
 import { useData } from '@/lib/data-context'
 import { LinkifyBlock } from '@/components/linkify-text'
 
-type TabId = 'stage' | 'lighting' | 'event' | 'opening' | 'venue' | 'ticket' | 'faq'
+type TabId = 'stage' | 'lighting' | 'event' | 'opening' | 'venue' | 'ticket' | 'bestShow' | 'faq'
 
 const tabs = [
   { id: 'stage' as TabId, label: 'ステージ', icon: MapPin },
@@ -33,6 +34,7 @@ const tabs = [
   { id: 'opening' as TabId, label: 'オープニング', icon: Megaphone },
   { id: 'venue' as TabId, label: '会場', icon: MapPin },
   { id: 'ticket' as TabId, label: 'チケット', icon: Ticket },
+  { id: 'bestShow' as TabId, label: 'BEST SHOW', icon: Award },
   { id: 'faq' as TabId, label: 'FAQ', icon: HelpCircle },
 ]
 
@@ -405,6 +407,26 @@ export function InfoHub() {
                 <CardContent className="space-y-6">
                   <LinkifyBlock 
                     text={data.ticketInfo} 
+                    className="text-foreground/80 leading-relaxed text-sm"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* BEST SHOW */}
+          {activeTab === 'bestShow' && (
+            <div className="space-y-6">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-foreground">
+                    <Award className="w-5 h-5" />
+                    BEST SHOW
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <LinkifyBlock
+                    text={data.eventBestShow}
                     className="text-foreground/80 leading-relaxed text-sm"
                   />
                 </CardContent>

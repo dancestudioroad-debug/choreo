@@ -68,6 +68,9 @@ interface SiteData {
   
   // Ticket Info
   ticketInfo: string
+
+  /** 出展者ガイド「BEST SHOW」タブ本文 */
+  eventBestShow: string
   
   // Submission Info
   submissionDetails: string
@@ -130,6 +133,7 @@ interface DataContextType {
   
   // Ticket
   updateTicketInfo: (info: string) => void
+  updateEventBestShow: (info: string) => void
   
   // Submission
   updateSubmissionDetails: (details: string) => void
@@ -307,6 +311,10 @@ const defaultData: SiteData = {
 
 【出演者特典】
 ・出演者本人は無料入場`,
+
+  eventBestShow: `【BEST SHOW について】
+・当日の流れや審査基準については、開催前に共有される案内をご確認ください。
+・ご不明点は運営までお問い合わせください。`,
 
   submissionDetails: `【音源提出】
 ・形式: MP3（320kbps以上）またはWAV
@@ -549,6 +557,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setData(prev => ({ ...prev, ticketInfo: info }))
   }
 
+  const updateEventBestShow = (info: string) => {
+    setData(prev => ({ ...prev, eventBestShow: info }))
+  }
+
   // Submission
   const updateSubmissionDetails = (details: string) => {
     setData(prev => ({ ...prev, submissionDetails: details }))
@@ -645,6 +657,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateVenueSeatChartUrl,
       updateVenueImageCrop,
       updateTicketInfo,
+      updateEventBestShow,
       updateSubmissionDetails,
       updatePaymentExplanation,
       updateGoogleDriveUrl,
